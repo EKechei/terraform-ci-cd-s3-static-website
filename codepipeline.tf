@@ -26,7 +26,7 @@ resource "aws_codepipeline" "codepipeline" {
 
       configuration = {
         Owner            = "EKechei"
-        Repo             = "EKechei/Automation"
+        Repo             = "EKechei/Webhosting-Automation"
         Branch           = "main"
         OAuthToken      =  var.github_token
   
