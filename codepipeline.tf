@@ -45,7 +45,7 @@ resource "aws_codepipeline" "codepipeline" {
       version          = "1"
       input_artifacts  = ["source_output"]
       configuration = {
-        BucketName = "papstots"
+        BucketName = "nyangilika"
         Extract    = "true"
       }
     }
