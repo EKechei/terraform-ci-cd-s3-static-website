@@ -1,16 +1,23 @@
-# CodePipeline resource
+# Define the CodeStar Connection
+resource "aws_codestarconnections_connection" "example" {
+  name          = "cloudforce"  # Name for your CodeStar connection
+  provider_type = "GitHub"            # Provider type for GitHub
+  
+  }
+
+  
+
+
+# Define the CodePipeline resource
 resource "aws_codepipeline" "codepipeline" {
   name     = "statichosting"
-  role_arn = aws_iam_role.codepipeline_role.arn
+  role_arn = "arn:aws:iam::475233874405:role/service-role/AWSCodePipelineServiceRole-us-east-1-S3Hosting"
 
   artifact_store {
     location = aws_s3_bucket.codepipeline_bucket.bucket
     type     = "S3"
 
-    encryption_key {
-      id   = aws_kms_key.s3kmskey.arn
-      type = "KMS"
-    }
+  
   }
 
   stage {
@@ -19,17 +26,15 @@ resource "aws_codepipeline" "codepipeline" {
     action {
       name             = "Source"
       category         = "Source"
-      owner            = "ThirdParty"
-      provider         = "GitHub"
+      owner            = "AWS"
+      provider         = "CodeStarSourceConnection"  # Using CodeStar Source Connection
       version          = "1"
       output_artifacts = ["source_output"]
 
       configuration = {
-        Owner            = "EKechei"
-        Repo             = "EKechei/Webhosting-Automation"
-        Branch           = "main"
-        OAuthToken      =  var.github_token
-  
+        ConnectionArn    = "arn:aws:codestar-connections:us-east-1:475233874405:connection/3c236d58-7e79-4b7e-b40c-abdd05431dee"  # Reference CodeStar Connection ARN
+        FullRepositoryId = "EKechei/Webhosting-Automation"
+        BranchName       = "main"
       }
     }
   }
@@ -52,15 +57,12 @@ resource "aws_codepipeline" "codepipeline" {
   }
 }
 
-resource "aws_codestarconnections_connection" "example" {
-  name          = "GithubConnection"
-  provider_type = "GitHub"
-}
-
+# AWS S3 bucket resource
 resource "aws_s3_bucket" "codepipeline_bucket" {
-  bucket = "buckettots1"
+  bucket = "buckettots1"  # Ensure this bucket name is unique globally
 }
 
+# S3 bucket public access block resource
 resource "aws_s3_bucket_public_access_block" "codepipeline_bucket_pab" {
   bucket = aws_s3_bucket.codepipeline_bucket.id
 
@@ -69,62 +71,3 @@ resource "aws_s3_bucket_public_access_block" "codepipeline_bucket_pab" {
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
-
-
-data "aws_iam_policy_document" "assume_role" {
-  statement {
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["codepipeline.amazonaws.com"]
-    }
-
-    actions = ["sts:AssumeRole"]
-  }
-}
-
-resource "aws_iam_role" "codepipeline_role" {
-  name               = "test-role"
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
-}
-
-data "aws_iam_policy_document" "codepipeline_policy" {
-  statement {
-    effect = "Allow"
-
-    actions = [
-      "s3:GetObject",
-      "s3:GetObjectVersion",
-      "s3:GetBucketVersioning",
-      "s3:PutObjectAcl",
-      "s3:PutObject",
-    ]
-
-    resources = [
-      aws_s3_bucket.codepipeline_bucket.arn,
-      "${aws_s3_bucket.codepipeline_bucket.arn}/*" , 
-      "arn:aws:codestar-connections:us-east-1:475233874405:connection/60a59bb3-db33-4844-95a4-08da89fa3394"
-    ]
-  }
-
-  statement {
-    effect    = "Allow"
-    actions   = ["codestar-connections:UseConnection"]
-    resources = [aws_codestarconnections_connection.example.arn]
-  }
-}
-
-resource "aws_iam_role_policy" "codepipeline_policy" {
-  name   = "codepipeline_policy"
-  role   = aws_iam_role.codepipeline_role.id
-  policy = data.aws_iam_policy_document.codepipeline_policy.json
-}
-
-
-resource "aws_kms_key" "s3kmskey" {
-  description             = "KMS key for S3 encryption"
-  deletion_window_in_days = 10
-  enable_key_rotation     = true
-}
-
