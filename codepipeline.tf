@@ -32,8 +32,8 @@ resource "aws_codepipeline" "codepipeline" {
       output_artifacts = ["source_output"]
 
       configuration = {
-        ConnectionArn    = "arn:aws:codestar-connections:us-east-1:475233874405:connection/3c236d58-7e79-4b7e-b40c-abdd05431dee"  # Reference CodeStar Connection ARN
-        FullRepositoryId = "EKechei/Webhosting-Automation"
+        ConnectionArn    = "arn:aws:codeconnections:us-east-1:475233874405:connection/9f33c364-9ca7-438a-bd3f-d17530023a5f"  # Reference CodeStar Connection ARN
+        FullRepositoryId = "EKechei/terraform-ci-cd-s3-static-website"
         BranchName       = "main"
       }
     }
